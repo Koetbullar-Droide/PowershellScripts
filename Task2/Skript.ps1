@@ -215,6 +215,30 @@ function User-Menu {
         }
     }
 }
+# Untermenü für Wallpaper-Verwaltung
+function Wallpaper-Menu {
+    Clear-Host
+    Write-Host "********** GPO Wallpaper Verwaltung **********" -ForegroundColor Cyan
+    $wallpaperPath = Read-Host "Meister, geben Sie den UNC-Pfad zum Hintergrundbild ein (z.B. \\bbw-server1\Wallpaper\bbw.png)"
+    
+    try {
+        # Existierenden Eintrag löschen
+        Remove-GPPrefRegistryValue -Name "Default Domain Policy" -Context User -Key "HKCU\Control Panel\Desktop" -ValueName Wallpaper -ErrorAction SilentlyContinue
+
+        # Neuen Eintrag setzen
+        Set-GPPrefRegistryValue -Name "Default Domain Policy" -Context User -Action Replace `
+            -Key "HKCU\Control Panel\Desktop" -ValueName Wallpaper -Value $wallpaperPath -Type String
+
+        Write-Host "`nHintergrundbild-Pfad wurde erfolgreich in der Registry gesetzt!" -ForegroundColor Green
+        Write-Host "`nMeister, führen Sie auf dem Zielserver folgenden Befehl aus, um die Änderung zu übernehmen:" -ForegroundColor Yellow
+        Write-Host "`n    gpupdate /force" -ForegroundColor Cyan
+        Write-Host "`nBitte achten Sie darauf, dass Sie als Domänenbenutzer (z.B. BBW\Administrator) angemeldet sind." -ForegroundColor Magenta
+    } catch {
+        Write-Host "Fehler beim Setzen des Registry-Eintrags: $_" -ForegroundColor Red
+    }
+
+    Pause
+}
 
 # Hauptmenü
 Do {
@@ -223,12 +247,14 @@ Do {
     Write-Host "1. OU Verwaltung"
     Write-Host "2. Gruppen Verwaltung"
     Write-Host "3. Benutzer Verwaltung"
+    Write-Host "4. GPO Wallpaper setzen"
     Write-Host "0. Beenden"
     $mainChoice = Read-Host "Meister, bitte Auswahl eingeben (0-3):"
     switch ($mainChoice) {
         "1" { OU-Menu }
         "2" { Group-Menu }
         "3" { User-Menu }
+        "4" { Wallpaper-Menu }
         "0" { Write-Host "Programm wird beendet..."; break }
         default {
             Write-Host "Ungültige Auswahl." -ForegroundColor Red
